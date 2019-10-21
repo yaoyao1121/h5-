@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>常用js算法</title>
+</head>
+<body>
+    <a href="https://blog.csdn.net/sphinx1122/article/details/83965349">【JS】数组中三个数的最大乘积
+    </a>
+    <a href="https://blog.csdn.net/weixin_33912638/article/details/89029862">js算法题合集（不定期更新）</a>
+    1.题目：假设有n级台阶，每次最多允许跨m步（m<=n），那么有多少种跨越方式？
+    思路：采用自顶向下的思考方式
+    f(n,m) = f(n-1,m)+f(n-2,m)+...+f(n-m,m)
+    当m=2时，这就是一个斐波那契数列。
+    同时，对于n阶变态跳，即n=m时，用公式有以下特点：
+    f(n) = f(n-1)+f(n-2)+...+f(1);//①
+    f(n-1) = f(n-2)+f(n-3)+...+f(1);//②
+    ①-② 即f(n) = 2f(n-1)，可以看出n阶变态跳的结果，实际是一个等比数列，也就是f(n) = 2^(n-1)
+    2.深度遍历js对象的属性名
+    题目：给定若干嵌套项的js对象，如下
+    //输入对象
+    var obj = {
+        a: {
+            b: {
+                c: {
+                    d:'h',
+                    j:'l',
+                    o: {
+                        p:'q',
+                        r:'s'
+                    },
+                    t: 'u'
+                }
+            },
+            v: {
+                w: {
+                    x: {
+                        y: 'z'
+                    }
+                }
+            }
+        },
+        e: {
+            f: {
+                i: 'k'
+            },
+            m: 'n'
+        }
+    }
+     
+    //输出结果，按照层数，把同一层的属性放在同一个子数组内
+    var result = [[a,e],[b,v,f,m],[c,w,i],[d,j,o,t,x],[p,r,y]];
+    <div class='time'></div>
+    <script>
+        // 解法1：递归算法
+        function f(n,m) {
+            var count = 0;
+            if (n == 0) {
+                return 1;
+            }
+            if (n >= m) {
+                for (var i=1; i<=m; i++) {
+                    count += f(n-i,m);
+                }
+            }else {
+                    count += f(n,n);
+                }
+            return count;
+        }
+        // 解法2：非递归算法
+        //首先根据规律，存储前m项结果，当n<m时，有f(n,m)=f(n,n)=f(n)=2^(n-1)
+        //接下来我们依次计算n=m+1时的结果并存入数组
+        //根据思路提示，第n项结果等于数组逆序前m项的和，我们截取数组迭代求和
+        //最后返回顶层的数据，即是f(n,m)
+        function f(n,m) {
+            var arr = [1];
+            for (var i=1; i<m;i++) {
+                arr.push(Math.pow(2,i));
+            }
+            for (var j=m+1; j<=n; j++) {
+                arr.push(arr.slice(-m).reduce((a,b) => a+b))
+            }
+            return arr.pop();
+        }
+        // 解题思路：按照深度遍历所有属性即可，注意对每一层做标记
+        //输出结果数组
+        var result = [];
+        //递归层数，也就是属性层数
+        var num = 0;
+        
+        function getProp(obj) {
+            //获取对象的属性数组
+            var keys = Object.keys(obj);
+            var len = keys.length;
+            for(var i=0; i<len; i++) {
+                //判断属性值，如果是对象，则递归遍历
+                if(typeof obj[keys[i]] == 'object') {
+                    //如果属性是对象，层数加一
+                    num++;
+                    //用result[num-1]存储每一层的结果，如果该层首次存储属性名称，初始化为空数组
+                    if(typeof result[num-1] != 'object') {
+                        result[num-1] = [];
+                    }
+                    result[num-1].push(keys[i]);
+                    getProp(obj[keys[i]]);
+                    //注意当一层的所有属性都遍历完之后，返回上一层
+                    if(i == len-1) {
+                        num--;
+                    }
+                }else {
+                    //如果属性不是层数，那么先对层数加一，存入后再减一
+                    num++;
+                    if(typeof result[num-1] != 'object') {
+                        result[num-1] = [];
+                    }
+                    result[num-1].push(keys[i]);
+                    num--;
+                    if(i == len-1) {
+                        num--;
+                    }
+                }
+            }
+        }
+        var obj = {
+            a: {
+                b: {
+                    c: {
+                        d:'h',
+                        j:'l',
+                        o: {
+                            p:'q',
+                            r:'s'
+                        },
+                        t: 'u'
+                    }
+                },
+                v: {
+                    w: {
+                        x: {
+                            y: 'z'
+                        }
+                    }
+                }
+            },
+            e: {
+                f: {
+                    i: 'k'
+                },
+                m: 'n'
+            }
+        }
+        getProp(obj);
+        console.log(result);
+    </script>
+    <script>
+        //多维数组扁平化（转一维数组）开始
+        var arr3=[[0,1,[9,8]],[2,3,[6,7]],[4,5]];
+        function reArr(arr){
+            var newarr=[];
+            for(let i=0;i<arr.length;i++){
+                if(Array.isArray(arr[i])){ //arr[i] instanceof Array
+                    newarr=newarr.concat(reArr(arr[i]))
+                }else{
+                    newarr.push(arr[i])
+                }
+            }
+            return newarr;
+        }
+        let arr4=reArr(arr3);
+        console.log(arr4,'-----arr4---')
+        //多维数组扁平化结束
+
+
+        /*一00排序*/
+        var arr1=[15,88,4,5,79,4,5,47];
+        var arr2=[15,88,4,5,79,4,5,47];
+        var T;
+        //顺序排序
+        for(i in arr1){
+            for(var j=0;j<arr1.length-1;j++){
+                if(arr1[i]<arr1[j]){
+                    T=arr1[i];
+                    arr1[i]=arr1[j];
+                    arr1[j]=T;
+                }
+            }
+        }
+        //冒泡排序
+        for(i in arr2){
+            for(var j=0;j<arr2.length-1-i;j++){
+                if(arr2[j+1]<arr2[j]){
+                    T=arr2[j];
+                    arr2[j]=arr2[j+1];
+                    arr2[j+1]=T;
+                }
+            }
+        }
+        console.log(arr1,'-----arr1---');
+        console.log(arr2,'----arr2----');
+        // 找出对象中值最大的key和value
+        var arr= {a:34343030,b:356565656444,n:45865436}
+           var list = new Array();
+           var name;
+           for(var i in arr){
+               list.push(arr[i]);
+               var max=Math.max.apply(null, list)
+               if(arr[i]==max){
+                   name=i;
+               }
+           }
+           console.log(name+":"+max);
+        // var number=0;/*拿到里面的value，用number来存储最大值*/
+        // var obj=null;/*用obj来存储它的键key*/
+        // /*拿到里面的value值去比较，用number去储存最大的那个值*/
+        // for(var k in arr){
+        //     if(arr[k]>number){
+        //         number=arr[k];
+        //         obj=k;
+        //     }
+        // }
+        // console.log(obj+":"+number);
+
+            /*1.编写一个方法add()，没有参数的时候返回值为0，有参数时返回值是所有参数之和*/
+    //    arguments是返回当前实际参数的集合
+        function add(){
+            var a=0;
+            if(arguments.length>0){
+                for(var i=0;i<arguments.length;i++){
+                    a+=arguments[i];
+                }
+            }
+            return a;
+        }
+        console.log(add(),'-----add()---');
+        console.log(add(1, 2, 3),'-----add(1,2,3)----');
+        //es6语法
+        var b=0;
+        function add1(...arr){
+            if(arr.length>0){
+                for(var i=0;i<arr.length;i++){
+                    b+=arr[i];
+                }
+            }
+            return b;
+        }
+        console.log(add1(),'-----add1()---');
+        console.log(add1(1, 2, 3),'-----add1(1,2,3)----');
+        console.log(add1(1, 2, 3),'-----add1(1,2,3)----');
+         /*2.编写一个距离双十一倒计时的程序*/
+         var timer;
+        function show_time(){
+            var time_start = new Date().getTime(); //设定当前时间   获取的是当前时间距离1970.1.1 凌晨的毫秒数
+            var time_end =  new Date(`${new Date().getFullYear()+1}/01/01 00:00:00`).getTime(); //设定目标时间
+            // 计算时间差
+            var time_distance = parseInt((time_end - time_start)/1000);
+            //天
+            var int_day=parseInt(time_distance/3600/24);
+            // 时
+            var int_hour =parseInt(time_distance/3600%24);
+            // 分
+            var int_minute =parseInt(time_distance/60%60);
+            // 秒
+            var int_second =parseInt(time_distance%60);
+            // 时分秒为单数时、前面加零
+            if(int_day<10){
+                int_day = "0" + int_day;
+            }
+            if(int_hour < 10){
+                int_hour = "0" + int_hour;
+            }
+            if(int_minute < 10){
+                int_minute = "0" + int_minute;
+            }
+            if(int_second < 10){
+                int_second = "0" + int_second;
+            }
+            // 显示时间
+            body=document.getElementsByClassName('time')[0];
+            body.innerHTML=(int_day+":天"+int_hour+":小时"+ int_minute+":分钟"+int_second+":秒");
+            if(int_day == 0 && int_hour == 0 && int_minute == 0 && int_second == 0 ){
+                clearInterval(timer)
+            }
+        }
+        // 设置定时器
+        timer=setInterval(show_time,1000);
+            
+        //    BootStrap中通过图片添加   img-responsive   类可以让图片支持响应式布局
+
+        //
+        //    for(var i=0;i<5;i++){
+        //        setTimeout(function(i){
+        //            console.log(i);}(i),i*1000);
+        //    }//这样行程闭包，输出0 1 2 3 4
+        //
+        //
+        //    for(var i=0;i<5;i++){
+        //        setTimeout(function(){
+        //            console.log(i);},i*1000);
+        //    }
+
+
+
+        //    播放：dom.play()   暂停：dom.pause()
+
+
+        var str="abc7hjk99qwe912";
+        var arr=[];
+        var str1="";
+        console.log(str.match(/[0-9]+/g));
+        console.log(str.replace(/[^0-9]+/g, ' '));
+        for(var i=0;i<str.length;i++){
+            if(str.charAt(i)>=0 && str.charAt(i)<=9){
+                str1+=str.charAt(i);
+            }else{
+            if(str1){
+                arr.push(str1);
+                str1="";
+            }
+            }
+            if(i==str.length-1){
+                if(str1){
+                    arr.push(str1);
+                    str1="";
+                }
+            }
+        }
+        console.log(arr);
+    //取出一串字符中出现次数最多的字符以及个数
+    /*这个字符串中的每个字每出现了多少次*/
+	var ary = "asasDFGHadDfFFhjkMNJGBHGDsdfghjfghjkdfghjkl";
+	var obj = {};
+	var i = 0;
+ 
+	ary1 = ary.toLocaleLowerCase(); //将字符串转为小写
+ 
+	for(i = 0; i < ary1.length; i++){
+		key = ary1[i];
+		if(obj[key]){
+			//对象中有这个字母
+			obj[key]++;
+		}else{
+			//对象中没有这个字母,把字母加到对象中
+			obj[key] = 1;
+		}
+	}
+ 
+	for(var key in obj) {
+        //遍历这个对象
+		console.log(key + "这个字母出现了" + obj[key] + "次");
+	}
+
+    var list = new Array();
+    var name;
+    for(var i in obj){
+        list.push(obj[i]);
+        var max=Math.max.apply(null, list)
+        if(obj[i]==max){
+            name=i;
+        }
+    }
+    console.log(name+":"+max);
+    </script>
+</body>
+</html>
